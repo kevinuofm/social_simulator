@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Social Simulator</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body class="bg-gray-100 min-h-screen">
+    <div class="container mx-auto px-4 py-8">
+        <div class="max-w-3xl mx-auto">
+            <h1 class="text-3xl font-bold text-center mb-8 text-gray-800">Social Simulator</h1>
+            
+            <!-- Scenario Selection -->
+            <div class="mb-6 bg-white rounded-lg shadow-lg p-6">
+                <h2 class="text-xl font-semibold mb-4">Choose a Scenario</h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {% for scenario in scenarios %}
+                    <div class="scenario-card border rounded-lg p-4 cursor-pointer hover:bg-blue-50 transition-colors"
+                         data-scenario-id="{{ scenario.id }}">
+                        <h3 class="font-semibold text-lg mb-2">{{ scenario.title }}</h3>
+                        <p class="text-gray-600 mb-2">{{ scenario.description }}</p>
+                        <p class="text-sm text-gray-500">{{ scenario.context }}</p>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            
+            <!-- Current Scenario Info -->
+            <div id="current-scenario" class="mb-6 bg-white rounded-lg shadow-lg p-6 hidden">
+                <h2 class="text-xl font-semibold mb-2" id="scenario-title"></h2>
+                <p class="text-gray-600 mb-4" id="scenario-description"></p>
+                
+                <!-- Voice Settings -->
+                <div class="mb-4">
+                    <label for="voice-select" class="block text-sm font-medium text-gray-700 mb-2">AI Voice</label>
+                    <select id="voice-select" class="block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                        <option value="alloy">Alloy (Neutral)</option>
+                        <option value="echo">Echo (Male)</option>
+                        <option value="fable">Fable (Male)</option>
+                        <option value="onyx">Onyx (Male)</option>
+                        <option value="nova">Nova (Female)</option>
+                        <option value="shimmer">Shimmer (Female)</option>
+                    </select>
+                </div>
+            </div>
+            
+            <!-- Conversation Display -->
+            <div id="conversation" class="bg-white rounded-lg shadow-lg p-6 mb-6 hidden">
+                <div class="space-y-4" id="messages">
+                    <div class="text-gray-500 text-center">Select a scenario to begin...</div>
+                </div>
+            </div>
+            
+            <!-- Feedback Display -->
+            <div id="feedback-panel" class="bg-white rounded-lg shadow-lg p-6 mb-6 hidden">
+                <h3 class="font-semibold text-lg mb-2">Feedback</h3>
+                <div id="feedback-content" class="text-gray-600"></div>
+            </div>
+            
+            <!-- Controls -->
+            <div class="flex justify-center space-x-4">
+                <button id="startButton" class="bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 px-6 rounded-lg transition duration-200 hidden">
+                    Start Conversation
+                </button>
+                <div id="status" class="text-gray-600 py-2">Select a scenario to begin...</div>
+            </div>
+        </div>
+    </div>
+
+    <script src="{{ url_for('static', filename='app.js') }}"></script>
+</body>
+</html> 

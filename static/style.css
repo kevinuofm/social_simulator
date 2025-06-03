@@ -1,0 +1,39 @@
+.message {
+    padding: 0.75rem;
+    margin-bottom: 0.5rem;
+    border-radius: 0.5rem;
+}
+
+.user-message {
+    background-color: #e3f2fd;
+    margin-left: 2rem;
+    margin-right: 0;
+}
+
+.ai-message {
+    background-color: #f3e5f5;
+    margin-right: 2rem;
+    margin-left: 0;
+}
+
+#conversation::-webkit-scrollbar {
+    width: 8px;
+}
+
+#conversation::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 4px;
+}
+
+#conversation::-webkit-scrollbar-thumb {
+    background: #888;
+    border-radius: 4px;
+}
+
+#conversation::-webkit-scrollbar-thumb:hover {
+    background: #555;
+}
+
+.listening {
+    background-color: #ef5350 !important;
+} 
