@@ -7,12 +7,17 @@ from dotenv import load_dotenv
 import tempfile
 import uuid
 import json
+import logging
+
+# Configure logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 # Load environment variables
 load_dotenv()
 
 app = Flask(__name__)
-app.config['SECRET_KEY'] = os.urandom(24)
+app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'default-secret-key')
 
 # Enable CORS
 CORS(app)
@@ -60,6 +65,7 @@ SCENARIOS = [
 
 @app.route('/')
 def index():
+    logger.info("Homepage accessed")
     try:
         return render_template('index.html', scenarios=SCENARIOS)
     except Exception as e:
@@ -68,12 +74,12 @@ def index():
 
 @socketio.on('connect')
 def handle_connect():
-    print("Client connected")
+    logger.info("Client connected")
     emit('connected', {'data': 'Connected'})
 
 @socketio.on('disconnect')
 def handle_disconnect():
-    print("Client disconnected")
+    logger.info("Client disconnected")
 
 def text_to_speech(text, voice="alloy"):
     """Convert text to speech using OpenAI's TTS API and return the filename"""
@@ -141,7 +147,7 @@ def handle_start_scenario(data):
 
 @socketio.on('transcribe')
 def handle_transcription(data):
-    """Handle incoming audio transcription requests and provide feedback"""
+    logger.info(f"Received transcription request: {data.get('text')[:50]}...")
     try:
         text = data.get('text', '')
         voice = data.get('voice', 'alloy')
@@ -190,8 +196,10 @@ def handle_transcription(data):
         })
         
     except Exception as e:
-        print(f"Error: {str(e)}")
+        logger.error(f"Error processing transcription: {str(e)}")
         emit('error', {'message': str(e)})
 
 if __name__ == '__main__':
-    socketio.run(app, debug=True) 
+    port = int(os.getenv('PORT', 5000))
+    logger.info(f"Starting application on port {port}")
+    socketio.run(app, host='0.0.0.0', port=port) 
