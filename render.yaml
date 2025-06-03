@@ -8,4 +8,11 @@ services:
       - key: PYTHON_VERSION
         value: 3.11.0
       - key: OPENAI_API_KEY
-        sync: false 
+        sync: false
+      - key: WEB_CONCURRENCY
+        value: 1
+    plan: starter
+    healthCheckPath: /
+    autoDeploy: true
+    domains:
+      - social-simulator.onrender.com 
