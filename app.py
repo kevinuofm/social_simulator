@@ -8,6 +8,7 @@ import tempfile
 import uuid
 import json
 import logging
+import sys
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -25,8 +26,18 @@ CORS(app)
 # Initialize SocketIO
 socketio = SocketIO(app, cors_allowed_origins="*")
 
-# Initialize OpenAI client
-client = OpenAI(api_key=os.getenv('OPENAI_API_KEY'))
+# Initialize OpenAI client with error handling
+api_key = os.getenv('OPENAI_API_KEY')
+if not api_key:
+    logger.error("OPENAI_API_KEY environment variable is not set!")
+    sys.exit(1)
+
+try:
+    client = OpenAI(api_key=api_key)
+    logger.info("OpenAI client initialized successfully")
+except Exception as e:
+    logger.error(f"Failed to initialize OpenAI client: {str(e)}")
+    sys.exit(1)
 
 # Create a temporary directory for audio files
 TEMP_DIR = tempfile.mkdtemp()
