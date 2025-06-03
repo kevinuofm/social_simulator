@@ -1,7 +1,7 @@
 from flask import Flask, render_template, send_file
 from flask_socketio import SocketIO, emit
 from flask_cors import CORS
-from openai import OpenAI
+import openai
 import os
 from dotenv import load_dotenv
 import tempfile
@@ -33,10 +33,10 @@ if not api_key:
     sys.exit(1)
 
 try:
-    client = OpenAI(api_key=api_key)
-    logger.info("OpenAI client initialized successfully")
+    openai.api_key = api_key
+    logger.info("OpenAI API key set successfully")
 except Exception as e:
-    logger.error(f"Failed to initialize OpenAI client: {str(e)}")
+    logger.error(f"Failed to set OpenAI API key: {str(e)}")
     sys.exit(1)
 
 # Create a temporary directory for audio files
@@ -80,7 +80,7 @@ def index():
     try:
         return render_template('index.html', scenarios=SCENARIOS)
     except Exception as e:
-        print(f"Error rendering template: {str(e)}")
+        logger.error(f"Error rendering template: {str(e)}")
         return str(e), 500
 
 @socketio.on('connect')
@@ -98,16 +98,18 @@ def text_to_speech(text, voice="alloy"):
         filename = f"speech_{uuid.uuid4()}.mp3"
         filepath = os.path.join(TEMP_DIR, filename)
         
-        response = client.audio.speech.create(
+        response = openai.audio.speech.create(
             model="tts-1",
             voice=voice,
             input=text
         )
         
-        response.stream_to_file(filepath)
+        with open(filepath, 'wb') as f:
+            for chunk in response.iter_bytes(chunk_size=1024 * 1024):
+                f.write(chunk)
         return filename
     except Exception as e:
-        print(f"Error generating speech: {str(e)}")
+        logger.error(f"Error generating speech: {str(e)}")
         return None
 
 @app.route('/audio/<filename>')
@@ -118,7 +120,7 @@ def serve_audio(filename):
             mimetype='audio/mpeg'
         )
     except Exception as e:
-        print(f"Error serving audio: {str(e)}")
+        logger.error(f"Error serving audio: {str(e)}")
         return str(e), 404
 
 @socketio.on('start_scenario')
@@ -132,7 +134,7 @@ def handle_start_scenario(data):
             raise ValueError("Invalid scenario selected")
             
         # Generate initial prompt from AI
-        response = client.chat.completions.create(
+        response = openai.ChatCompletion.create(
             model="gpt-3.5-turbo",
             messages=[
                 {
@@ -143,7 +145,7 @@ def handle_start_scenario(data):
             max_tokens=100
         )
         
-        initial_message = response.choices[0].message.content.strip()
+        initial_message = response.choices[0].message['content'].strip()
         audio_filename = text_to_speech(initial_message, data.get('voice', 'alloy'))
         
         emit('scenario_started', {
@@ -153,7 +155,7 @@ def handle_start_scenario(data):
         })
         
     except Exception as e:
-        print(f"Error starting scenario: {str(e)}")
+        logger.error(f"Error starting scenario: {str(e)}")
         emit('error', {'message': str(e)})
 
 @socketio.on('transcribe')
@@ -168,10 +170,10 @@ def handle_transcription(data):
         if not scenario:
             raise ValueError("Invalid scenario")
             
-        print(f"Received text: {text}")
+        logger.info(f"Processing text: {text}")
         
         # Get AI response and feedback
-        response = client.chat.completions.create(
+        response = openai.ChatCompletion.create(
             model="gpt-3.5-turbo",
             messages=[
                 {
@@ -189,12 +191,12 @@ def handle_transcription(data):
         )
         
         # Parse the JSON response
-        response_data = json.loads(response.choices[0].message.content)
+        response_data = json.loads(response.choices[0].message['content'])
         ai_response = response_data['response']
         feedback = response_data['feedback']
         
-        print(f"AI response: {ai_response}")
-        print(f"Feedback: {feedback}")
+        logger.info(f"AI response: {ai_response}")
+        logger.info(f"Feedback: {feedback}")
         
         # Generate speech for AI response
         audio_filename = text_to_speech(ai_response, voice)
